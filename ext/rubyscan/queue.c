@@ -4,6 +4,7 @@
  * Sept 2016
  */
 #include "mod_runtime.h"
+#include "shared.h"
 
 #define QUEUE_OPEN 1
 #define QUEUE_CLOSED 0
@@ -85,7 +86,7 @@ void rscan_queue_put(rscan_event_queue_t *queue, rscan_match_event_t *event) {
 rscan_match_event_t* rscan_queue_shift(rscan_event_queue_t *queue) {
     rscan_match_event_t *val;
     int status;
-    if (status = rscan_queue_shift_ptr(queue, &val)) {
+    if ((status = rscan_queue_shift_ptr(queue, &val))) {
         errno = status;
         val = NULL;
     }
@@ -129,14 +130,14 @@ rscan_queue_err_t rscan_queue_shift_nogvlwait(rscan_event_queue_t *queue, rscan_
     rscan_queue_err_t status;
     queue_gvl_arg_t args;
 
-    if (status = rscan_queue_shift_nonblock_opt(queue, 0, out)) {
+    if ((status = rscan_queue_shift_nonblock_opt(queue, 0, out))) {
         if (status == RSCAN_QUEUE_FAIL_LOCKBUSY || status == RSCAN_QUEUE_FAIL_EMPTY) {
 
             args.queue = queue;
             args.out = out;
             args.interrupted = 0;
-            if (status = (rscan_queue_err_t) rb_thread_call_without_gvl(queue_gvl_wrapper, (void *) &args,
-                    queue_gvl_unblock, (void *) &args)) {
+            if ((status = (rscan_queue_err_t) rb_thread_call_without_gvl(queue_gvl_wrapper, (void *) &args,
+                    queue_gvl_unblock, (void *) &args))) {
                 // TODO: handle/log failures
             }
         }
@@ -147,7 +148,8 @@ rscan_queue_err_t rscan_queue_shift_nogvlwait(rscan_event_queue_t *queue, rscan_
 static void *queue_gvl_wrapper(void *arg) {
     queue_gvl_arg_t *args;
     args = (queue_gvl_arg_t *) arg;
-    return (void *) rscan_queue_shift_ptr_gvl(args->queue, args, args->out);
+    // return (void *) rscan_queue_shift_ptr_gvl(args->queue, args, args->out);
+    return INT2VOIDP(rscan_queue_shift_ptr_gvl(args->queue, args, args->out));
 }
 
 static void queue_gvl_unblock(void *arg) {
@@ -163,7 +165,7 @@ rscan_queue_err_t rscan_queue_shift_nonblock_opt(rscan_event_queue_t *queue,
     int status;
     /* task: acquire lock */
     if (!bWaitForLock) {
-        if (status = pthread_mutex_trylock(&queue->lock)) {
+        if ((status = pthread_mutex_trylock(&queue->lock))) {
             /* condition: exception */
             switch (status) {
                 case EBUSY:
@@ -176,7 +178,7 @@ rscan_queue_err_t rscan_queue_shift_nonblock_opt(rscan_event_queue_t *queue,
         }
         /* condition: lock is held */
     } else {
-        if (status = pthread_mutex_lock(&queue->lock)) {
+        if ((status = pthread_mutex_lock(&queue->lock))) {
             /* condition: error */
             return RSCAN_QUEUE_FAIL_UNDEF;
         }
@@ -245,7 +247,7 @@ static VALUE rscan_queue_m_initialize(VALUE self) {
     pthread_mutexattr_setprotocol(&attr_lock, PTHREAD_PRIO_INHERIT);
     Get_Queue(self, queue);
     queue->open = 0;
-    if (status = pthread_mutex_init(&queue->lock, &attr_lock)) {
+    if ((status = pthread_mutex_init(&queue->lock, &attr_lock))) {
         VALUE error, message;
         const char *msg = "Unspecified error";
         /* error */
@@ -279,7 +281,7 @@ static VALUE rscan_queue_m_initialize(VALUE self) {
     // TODO- check for pthread_condattr_setclock() and use monotonic timer
     pthread_condattr_init(&attr_cond);
     pthread_condattr_setpshared(&attr_cond, PTHREAD_PROCESS_PRIVATE);
-    if (status = pthread_cond_init(&queue->ready, &attr_cond)) {
+    if ((status = pthread_cond_init(&queue->ready, &attr_cond))) {
         VALUE error, message;
         const char *msg = "Unspecified error";
         /* error */

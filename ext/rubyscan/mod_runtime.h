@@ -14,7 +14,9 @@
 #include "queue.h"
 #include "scanner.h"
 
-extern VALUE rscan_module_scan_define(VALUE root);
-extern VALUE rscan_module_scan();
+// extern VALUE rscan_module_scan_define(VALUE root);
+// extern VALUE rscan_module_scan();
+extern VALUE rscan_module_runtime_define(VALUE root);
+extern VALUE rscan_module_runtime();
 
 #endif

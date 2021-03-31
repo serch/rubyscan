@@ -190,7 +190,7 @@ static VALUE rscan_compiler_compile_multi(VALUE self, VALUE expressions) {
     return self;
 }
 
-static void rscan_compiler_raise_compile_error(const char* pattern, hs_compile_error_t *error) {
+NO_RETURN static void rscan_compiler_raise_compile_error(const char* pattern, hs_compile_error_t *error) {
     ///////////////////////////////
     // FIXME MEMORY LEAK: *error //
     ///////////////////////////////
@@ -202,7 +202,7 @@ static void rscan_compiler_raise_compile_error(const char* pattern, hs_compile_e
     rb_exc_raise(vError);
 }
 
-static void rscan_compiler_raise_hs_error(hs_error_t error) {
+NO_RETURN static void rscan_compiler_raise_hs_error(hs_error_t error) {
     VALUE vError, message;
     message = rb_sprintf("rubyscan compiler failed to run: %s", rscan_hs_error_message(error));
     vError = rb_exc_new(

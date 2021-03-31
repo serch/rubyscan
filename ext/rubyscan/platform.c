@@ -48,7 +48,7 @@ static VALUE rscan_platform_m_populate(VALUE self) {
 static void rscan_platform_populate(hs_platform_info_t *pPlatform) {
     hs_error_t status;
     VALUE oError;
-    if (status = hs_populate_platform(pPlatform)) {
+    if ((status = hs_populate_platform(pPlatform))) {
         oError = rb_funcall(rscan_class_hs_error(), rb_intern("new"), 1, INT2NUM(status));
         rb_raise(oError, "hs_populate_platform failed: %s", rscan_hs_error_message(status));
     }

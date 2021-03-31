@@ -4,6 +4,7 @@
  * Sept 2016
  */
 #include "mod_runtime.h"
+#include "shared.h"
 
 typedef struct scan_gvl_arg {
     rscan_scan_unit_t* unit;
@@ -102,7 +103,7 @@ static VALUE rscan_scan_unit_m_init(VALUE self, VALUE oDb) {
     pthread_mutexattr_init(&attr_lock);
     pthread_mutexattr_settype(&attr_lock, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutexattr_setprotocol(&attr_lock, PTHREAD_PRIO_INHERIT);
-    if (status = pthread_mutex_init(&unit->lock, &attr_lock)) {
+    if ((status = pthread_mutex_init(&unit->lock, &attr_lock))) {
         VALUE message;
         const char *msg = "Unspecified error";
         /* error */
@@ -133,7 +134,7 @@ static VALUE rscan_scan_unit_m_init(VALUE self, VALUE oDb) {
 
     pthread_condattr_init(&attr_cond);
     pthread_condattr_setpshared(&attr_cond, PTHREAD_PROCESS_PRIVATE);
-    if (status = pthread_cond_init(&unit->ready, &attr_cond)) {
+    if ((status = pthread_cond_init(&unit->ready, &attr_cond))) {
         VALUE message;
         const char *msg = "Unspecified error";
         /* error */
@@ -155,7 +156,7 @@ static VALUE rscan_scan_unit_m_init(VALUE self, VALUE oDb) {
 
     Get_Scratch(unit->scratch, scratch);
     Get_Db(oDb, db);
-    if (status = hs_alloc_scratch(db->obj, &out)) {
+    if ((status = hs_alloc_scratch(db->obj, &out))) {
         // handle error
         VALUE message = rb_sprintf("hs_allocate_scratch: %s", rscan_hs_error_message(status));
         error = rb_exc_new(
@@ -173,13 +174,13 @@ static VALUE rscan_scan_unit_m_running_set(VALUE self, VALUE running) {
     rscan_scan_unit_t *unit;
     Get_Scan_Unit(self, unit);
 
-    rscan_scan_unit_running_set(unit, running);
+    rscan_scan_unit_running_set(unit, (int) running);
 
     return running;
 }
 
 extern hs_error_t rscan_scan_unit_invoke(rscan_scan_unit_t *unit, char *data, int len) {
-    VALUE handler;
+    // VALUE handler;
     scan_gvl_arg_t arg;
     hs_error_t status;
 
@@ -237,7 +238,7 @@ static VALUE rscan_scan_unit_event_receiver_thread(void* arg) {
 
     while (queue->open) {
         // consume event
-        if (status = rscan_queue_shift_nogvlwait(queue, &event)) {
+        if ((status = rscan_queue_shift_nogvlwait(queue, &event))) {
             if (status == RSCAN_QUEUE_FAIL_CLOSED) {
                 continue;
             } else {
@@ -270,7 +271,8 @@ static void* scan_gvl_wrapper(void* arg) {
 
     status = hs_scan(db->obj, args->data, args->len, 0, scratch->obj, args->unit->match, (void *) args->unit);
 
-    return (void*) status;
+    // return (void*) status;
+    return INT2VOIDP(status);
 }
 
 extern VALUE rscan_class_scan_unit() {

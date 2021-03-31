@@ -6,6 +6,16 @@
 #ifndef RSCAN_COMPILER_H
 #define RSCAN_COMPILER_H
 
+#ifdef __GNUC__
+#define NO_RETURN __attribute__((noreturn))
+#elif __MINGW32__
+#define NO_RETURN __attribute__((noreturn))
+#elif __clang__
+#define NO_RETURN __attribute__((noreturn))
+#elif _MSC_VER
+#define NO_RETURN __declspec(noreturn)
+#endif
+
 typedef struct rscan_compiler {
     unsigned int mode; /* HS_MODE_BLOCK, HS_MODE_STREAM, etc */
     VALUE platform;

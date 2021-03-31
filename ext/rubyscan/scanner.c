@@ -60,11 +60,11 @@ static VALUE rscan_scanner_m_scan(VALUE self, VALUE data) {
     Check_Type(data, T_STRING);
     Get_Scanner(self, scanner);
     cData = StringValuePtr(data);
-    cDataLen = RSTRING_LEN(data);
+    cDataLen = (int) RSTRING_LEN(data);
     for (i = 0; i < RARRAY_LEN(scanner->phases); i++) {
         Get_Scan_Unit(RARRAY_AREF(scanner->phases, i), unit);
-        if (status = rscan_scan_unit_invoke(unit, cData, cDataLen)) {
-            if (status = HS_SCAN_TERMINATED) {
+        if ((status = rscan_scan_unit_invoke(unit, cData, cDataLen))) {
+            if ((status = HS_SCAN_TERMINATED)) {
                 continue;
             }
         }
@@ -109,7 +109,7 @@ static VALUE rscan_scanner_m_running_set(VALUE self, VALUE running) {
         int i;
         for (i = 0; i < RARRAY_LEN(scanner->phases); i++) {
             Get_Scan_Unit(RARRAY_AREF(scanner->phases, i), unit);
-            rscan_scan_unit_running_set(unit, new_state);
+            rscan_scan_unit_running_set(unit, (int) new_state);
         }
     }
     return new_state;
